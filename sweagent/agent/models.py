@@ -662,7 +662,7 @@ class LiteLLMModel(AbstractModel):
         try:
             response: litellm.types.utils.ModelResponse = litellm.completion(  # type: ignore
                 model=self.config.name,
-                base_url="https://cmu.litellm.ai",
+                # base_url="https://cmu.litellm.ai",
                 messages=messages,
                 temperature=self.config.temperature if temperature is None else temperature,
                 top_p=self.config.top_p,
