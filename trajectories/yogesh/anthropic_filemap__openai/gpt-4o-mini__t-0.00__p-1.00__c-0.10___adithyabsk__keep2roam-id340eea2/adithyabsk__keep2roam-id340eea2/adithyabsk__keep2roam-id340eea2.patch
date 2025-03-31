@@ -1,0 +1,55 @@
+diff --git a/convert.py b/convert.py
+index a0c78ab..f5faf22 100644
+--- a/convert.py
++++ b/convert.py
+@@ -1,6 +1,10 @@
+ #!/usr/bin/env python
+ 
+-import argparse
++import click
++
++class Keep2RoamException(Exception):
++    pass
++
+ from pathlib import Path
+ import json
+ 
+@@ -45,7 +49,14 @@ def convert(read_path: Path, write_path: Path):
+             write_or_append_note(note, write_path)
+ 
+ 
+-def run_parser() -> argparse.Namespace:
++def run_parser() -> None:
++    @click.command()
++    @click.argument('input', type=click.Path(exists=True))
++    @click.argument('output', type=click.Path())
++    def cli(input, output):
++        convert(Path(input), Path(output))
++        
++    cli()
+     parser = argparse.ArgumentParser(
+         description="Convert a Google Keep dump to Markdown files."
+     )
+@@ -59,12 +70,13 @@ def run_parser() -> argparse.Namespace:
+         type=Path,
+         help='The folder to write the converted files.'
+     )
+-    args = parser.parse_args()
++    
+ 
+     return args
+ 
+ 
+-def main():
++def main() -> None:
++    pass
+     args = run_parser()
+     convert(args.input, args.output)
+ 
+diff --git a/requirements.txt b/requirements.txt
+index 8ed9ef4..0c15f24 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -1 +1,2 @@
+ marshmallow==3.8.0
++click==8.0.0

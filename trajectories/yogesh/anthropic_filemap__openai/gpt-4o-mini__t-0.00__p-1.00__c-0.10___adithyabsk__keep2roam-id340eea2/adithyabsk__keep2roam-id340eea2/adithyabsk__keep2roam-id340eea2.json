@@ -1,0 +1,74 @@
+{
+  "files": [
+    {
+      "path": "/adithyabsk__keep2roam/convert.py",
+      "code_changes": [
+        {
+          "line": "3-6",
+          "cardinality": "one-to-one",
+          "source_program_elements": [
+            "import",
+            "exception"
+          ],
+          "target_program_elements": [
+            "import",
+            "exception"
+          ],
+          "properties": [],
+          "source_apis": [],
+          "target_apis": []
+        },
+        {
+          "line": "52-59",
+          "cardinality": "one-to-one",
+          "source_program_elements": [
+            "function definition",
+            "function call"
+          ],
+          "target_program_elements": [
+            "function definition",
+            "function call"
+          ],
+          "properties": [
+            "argument transformation"
+          ],
+          "source_apis": [
+            "argparse"
+          ],
+          "target_apis": [
+            "click"
+          ]
+        },
+        {
+          "line": "78-80",
+          "cardinality": "one-to-one",
+          "source_program_elements": [
+            "function definition"
+          ],
+          "target_program_elements": [
+            "function definition"
+          ],
+          "properties": [],
+          "source_apis": [],
+          "target_apis": []
+        }
+      ]
+    },
+    {
+      "path": "/adithyabsk__keep2roam/requirements.txt",
+      "code_changes": [
+        {
+          "line": "2",
+          "cardinality": "one-to-one",
+          "source_program_elements": [],
+          "target_program_elements": [],
+          "properties": [
+            "parameter addition to decorated function"
+          ],
+          "source_apis": [],
+          "target_apis": []
+        }
+      ]
+    }
+  ]
+}

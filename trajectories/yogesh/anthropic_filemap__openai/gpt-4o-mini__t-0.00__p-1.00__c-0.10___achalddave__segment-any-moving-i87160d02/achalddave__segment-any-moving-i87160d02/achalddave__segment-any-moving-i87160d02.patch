@@ -1,0 +1,102 @@
+diff --git a/flow/compute_flow_sequences.py b/flow/compute_flow_sequences.py
+index 7cc6d9b..d458b79 100644
+--- a/flow/compute_flow_sequences.py
++++ b/flow/compute_flow_sequences.py
+@@ -1,6 +1,6 @@
+ """Compute flow on videos."""
+ 
+-import argparse
++import click
+ import contextlib
+ import logging
+ import os
+@@ -263,17 +263,10 @@ def compute_sequence_flow_gpu_helper(kwargs):
+ 
+ 
+ def main():
+-    # Use first line of file docstring as description if it exists.
+-    parser = argparse.ArgumentParser(
+-        description=__doc__.split('\n')[0] if __doc__ else '',
+-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+-    parser.add_argument(
+-        '--input-dir',
+-        required=True,
+-        help='Directory containing a subdir for every sequence.')
+-    parser.add_argument('--output-dir', required=True)
+-    parser.add_argument(
+-        '--flow-type', choices=['flownet2', 'liteflownet'], required=True)
++    """Use first line of file docstring as description if it exists."""
++    @click.option('--input-dir', required=True, help='Directory containing a subdir for every sequence.')
++    @click.option('--output-dir', required=True)
++    @click.option('--flow-type', type=click.Choice(['flownet2', 'liteflownet']), required=True)
+     parser.add_argument(
+         '--recursive',
+         action='store_true',
+@@ -281,42 +274,30 @@ def main():
+                 containing a file with extension specified by --extension is
+                 treated as a sequence directory. NOTE: Does not support
+                 symlinked directories.""")
+-    parser.add_argument('--extension', default='.png')
+-    parser.add_argument(
+-        '--convert-to-angle-magnitude-png',
+-        help=('Convert flo files to angle/magnitude PNGs, and do not keep '
+-              '.flo files around.'),
+-        action='store_true')
+-    parser.add_argument('--gpus', default=[0, 1, 2, 3], nargs='*', type=int)
+-    parser.add_argument(
+-        '--num-workers',
+-        default=-1,
+-        type=int,
+-        help=('Number of workers. By default, set to the number of GPUs. '
++    @click.option('--extension', default='.png')
++    @click.option('--convert-to-angle-magnitude-png', is_flag=True, help=('Convert flo files to angle/magnitude PNGs, and do not keep '
++              '.flo files around.'))
++    @click.option('--gpus', default=[0, 1, 2, 3], multiple=True, type=int)
++    @click.option('--num-workers', default=-1, type=int, help=('Number of workers. By default, set to the number of GPUs. '
+               'Having more workers than GPUs allows some workers to process '
+               'CPU operations, like loading input/output lists, checking '
+               'image dimensions, and converting .flo to .png while other '
+               'workers use the GPU.'))
+ 
+-    flownet2_parser = parser.add_argument_group('Flownet2 params')
+-    flownet2_parser.add_argument(
+-        '--flownet2-dir', help='Path to flownet2 repo.')
+-    flownet2_parser.add_argument(
+-        '--flownet2-model',
+-        default='kitti',
+-        choices=['kitti', 'sintel', 'chairs-things'])
+-
+-    liteflownet_parser = parser.add_argument_group('Liteflownet Params')
+-    liteflownet_parser.add_argument(
+-        '--liteflownet-dir', help='Path to liteflownet repo')
+-    liteflownet_parser.add_argument(
+-        '--liteflownet-model',
+-        default='liteflownet-ft-kitti',
+-        help=('Model to use for evaluation. chairs-things maps to the '
++    @click.group()
++    def flownet2_params():
++        """Flownet2 parameters."""
++    @click.option('--flownet2-dir', help='Path to flownet2 repo.')
++    @click.option('--flownet2-model', default='kitti', type=click.Choice(['kitti', 'sintel', 'chairs-things']))
++
++    @click.group()
++    def liteflownet_params():
++        """Liteflownet parameters."""
++    @click.option('--liteflownet-dir', help='Path to liteflownet repo')
++    @click.option('--liteflownet-model', default='liteflownet-ft-kitti', help=('Model to use for evaluation. chairs-things maps to the '
+               '`liteflownet` model, `sintel` maps to `liteflownet-ft-sintel` '
+-              'and `kitti` maps to `liteflownet-ft-kitti`.'),
+-        choices=['chairs-things', 'sintel', 'kitti'])
+-    args = parser.parse_args()
++              'and `kitti` maps to `liteflownet-ft-kitti`.'), type=click.Choice(['chairs-things', 'sintel', 'kitti']))
++    args = click.get_current_context().params
+ 
+     input_root = Path(args.input_dir)
+     output_root = Path(args.output_dir)
+@@ -390,4 +371,4 @@ def main():
+ 
+ 
+ if __name__ == "__main__":
+-    main()
++    click.Command(name='compute_flow_sequences', help='Compute flow on videos.')(main)()
+\ No newline at end of file
