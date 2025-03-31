@@ -2,7 +2,7 @@
 agent:
   templates:
     system_template: |-
-      You are a helpful code migration assistant that can interact with a computer to solve tasks.
+      You are a helpful assistant that can interact with a computer to solve tasks.
     instance_template: |-
       <uploaded_files>
       {{working_dir}}
@@ -13,77 +13,15 @@ agent:
       {{problem_statement}}
       </pr_description>
 
-      **Your Task:**
-      Your goal is to implement the necessary changes to the repository so that the requirements specified in the <pr_description> are met. Please make minimal, targeted changes only to the non-test files in the {{working_dir}} directory. This means **you should not modify any test files or the logic of existing tests** unless they are directly affected by the migration.
-
+      Can you help me implement the necessary changes to the repository so that the requirements specified in the <pr_description> are met?
+      I've already taken care of all changes to any of the test files described in the <pr_description>. This means you DON'T have to modify the testing logic or any of the tests in any way!
+      Your task is to make the minimal changes to non-tests files in the {{working_dir}} directory to ensure the <pr_description> is satisfied.
       Follow these steps to resolve the issue:
-
-      1. **Read and Understand Relevant Code:**
-        - As a first step, identify the functions, classes, or files related to the changes required by the <pr_description>.
-        - Study the logic and flow of the existing code before making changes. If the repository has README files or documentation, refer to those to get context on its functionality.
-
-      2. **Edit the Code to Resolve the Issue:**
-        - Modify the relevant **functions** or **modules** in the codebase to address the requirements in the <pr_description>. **Focus only on the areas related to the migration task.**
-        - Make sure that you do not introduce unnecessary changes that are outside the scope of the problem.
-        - When changing code:
-          - **Completely remove deprecated code** or elements that are no longer needed. Do not simply comment them out; remove them entirely.
-          - Ensure the code is **clean** and follows any style or formatting guidelines present in the repository.
-        
-      3. After completing the task, summarize the changes you made to the codebase using the following JSON format. When you start the summary, start with "Here is the summary of the changes in the specified JSON format":
-
-          ```json
-          {
-            "files": [
-              {
-                "path": "<file_path>",
-                "code_changes": [
-                  {
-                    "line": "<line_number(s)>",
-                    "cardinality": "<one-to-one/one-to-many/etc.>",
-                    "source_program_elements": ["<source_element>"],
-                    "target_program_elements": ["<target_element>"],
-                    "properties": ["<properties>"],
-                    "source_apis": ["<source_api>"],
-                    "target_apis": ["<target_api>"]
-                  }
-                ]
-              }
-            ]
-          }
-          ```
-
-      **Guidelines for filling the JSON fields:**  
-      - **Only use the predefined values** listed below. **Do not invent new terms.**  
-      - If a field does not apply (e.g., if code was removed rather than modified), leave the list empty rather than filling it incorrectly.  
-
-      **ProgramElement:**  
-      - import  
-      - exception  
-      - function call  
-      - attribute  
-      - decorator  
-      - function reference  
-      - type  
-
-      **Cardinality:**  
-      - zero-to-one  
-      - one-to-zero  
-      - one-to-one  
-      - one-to-many  
-      - many-to-one  
-      - many-to-many  
-      - not applicable  
-
-      **Property:**  
-      - element name change  
-      - argument addition  
-      - argument deletion  
-      - argument name change  
-      - argument transformation  
-      - async transformation  
-      - output transformation  
-      - parameter addition to decorated function 
-
+      1. As a first step, it might be a good idea to find and read code relevant to the <pr_description>
+      2. Create a script to reproduce the error and execute it with `python <filename.py>` using the bash tool, to confirm the error
+      3. Edit the sourcecode of the repo to resolve the issue
+      4. Rerun your reproduce script and confirm that the error is fixed!
+      5. Think about edgecases and make sure your fix handles them as well
       Your thinking should be thorough and so it's fine if it's very long.
     next_step_template: |-
       OBSERVATION:
