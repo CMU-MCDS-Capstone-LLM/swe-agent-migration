@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+"""
+Reconstruct RepoGraph on every action.
+TODO: Only reconstruct the delta using diff.
+"""
+
+from repograph.Constructor import RepoGraphConstructor
+from repograph_config import get_config
+
+def main():
+    config = get_config()
+    constructor = RepoGraphConstructor(config)
+    constructor.construct(use_cache=True)
+    constructor.save(use_cache=True)
+
+if __name__ == "__main__":
+    main()

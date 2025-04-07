@@ -90,7 +90,8 @@ class ToolConfig(BaseModel):
     Unlike `install_commands`, these commands are part of the environment state.
     """
 
-    execution_timeout: int = 30
+    # execution_timeout: int = 30
+    execution_timeout: int = 60
     """Timeout for executing commands in the environment"""
 
     install_timeout: int = 300
@@ -288,7 +289,7 @@ class ToolHandler:
             return self.mock_state
 
         for state_command in self.config.state_commands:
-            env.communicate(state_command, check="warn")
+            env.communicate(state_command, check="warn", timeout=self.config.execution_timeout)
         combined_state = self._get_state(env)
         self.logger.debug(f"Retrieved state from environment: {combined_state}")
         return combined_state

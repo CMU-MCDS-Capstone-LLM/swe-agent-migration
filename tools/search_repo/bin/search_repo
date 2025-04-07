@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+
+from repograph.Searcher import RepoGraphSearcher
+import sys
+import os
+from repograph_config import get_config
+
+def main():
+    func_name = sys.argv[1]
+    config = get_config()
+    searcher = RepoGraphSearcher(config)
+    result = searcher.one_hop_neighbors(func_name)
+    print(result)
+
+if __name__ == "__main__":
+    main()
