@@ -1,0 +1,177 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import argparse
+import requests
+from bs4 import BeautifulSoup
+import sys
+import re
+from langchain_community.utilities import SearxSearchWrapper
+
+sys.stdout.reconfigure(encoding="utf-8")
+
+
+class WebSearchTool:
+    def __init__(self, query, max_results=5):
+        self.query = query.strip()
+        self.max_results = max_results
+        self.headers = {"User-Agent": "Mozilla/5.0"}
+        self.search_client = SearxSearchWrapper(
+            searx_host="http://host.docker.internal:8080"
+            # searx_host="http://localhost:8080"
+        )
+        self.keywords = self.extract_keywords(self.query)
+
+    def run(self):
+        print(f"<WEB_SEARCH_CONTEXT>\n🔍 Query: {self.query}\n")
+
+        results = self._searx_query()
+        if isinstance(results, str):
+            print(results)
+            print("</WEB_SEARCH_CONTEXT>")
+            return
+
+        if not results:
+            print("<NOTE>No search results found at all.\n</WEB_SEARCH_CONTEXT>")
+            return
+
+        shown = 0
+        for i, (url, desc) in enumerate(results, start=1):
+            if not url or not desc or "index" in url or url.endswith("/"):
+                continue
+
+            summary = self._summarize_page(url)
+            if not summary or "<NOTE>" in summary:
+                continue
+
+            print(f"[{i}] {url}\nDescription: {desc[:300]}\n")
+            print(f"Documentation Summary:\n{summary}\n---\n")
+            shown += 1
+
+        if shown == 0:
+            print(
+                "<NOTE>Valid pages found, but none had helpful documentation context.</NOTE>"
+            )
+
+        print("</WEB_SEARCH_CONTEXT>")
+
+    def _searx_query(self):
+        try:
+            results = self.search_client.results(
+                self.query, num_results=self.max_results
+            )
+            return [(r["link"], r.get("snippet", r.get("title", ""))) for r in results]
+        except Exception as e:
+            return f"<ERROR>Search failed: {e}</ERROR>"
+
+    def _summarize_page(self, url):
+        try:
+            r = requests.get(url, timeout=10, headers=self.headers)
+            r.raise_for_status()
+            soup = BeautifulSoup(r.text, "html.parser")
+            return self._extract_doc_summary(soup)
+        except Exception as e:
+            return f"<ERROR>Failed to summarize {url}: {e}</ERROR>"
+
+    def extract_keywords(self, query: str) -> list:
+        matches = re.findall(r"[a-zA-Z_][a-zA-Z0-9_]*", query)
+        return [m for m in matches if len(m) > 2]
+
+    def score_code_block(self, code: str) -> int:
+        score = 0
+        if "def " in code or "class " in code:
+            score += 1
+        if any(token in code for token in ["import ", ".", "@", ">>> "]):
+            score += 1
+        if any(kw.lower() in code.lower() for kw in self.keywords):
+            score += 2
+        if len(code) > 100:
+            score += 1
+        return score
+    def _classify_code_blocks(self, code_blocks):
+        examples = []
+        signatures = []
+
+        for score, code in code_blocks:
+            lines = code.strip().splitlines()
+            code_len = len(lines)
+
+            if code_len == 0:
+                continue
+
+            # Classify as "example" if:
+            if (
+                ">>>" in code
+                or "$ " in code
+                or "print(" in code
+                or "=" in code
+                or "(" in code and ")" in code and not code.strip().startswith(("def", "class"))
+                or code_len > 2
+            ):
+                examples.append(code)
+            elif any(
+                line.strip().startswith(("def ", "class ", "@")) for line in lines
+            ):
+                signatures.append(code)
+
+        return examples, signatures
+
+    def _extract_doc_summary(self, soup):
+        containers = soup.select(
+            "section, article, div.content, div.body, div#content, main"
+        )
+
+        code_blocks = []
+        for container in containers:
+            for tag in container.find_all(["pre", "code"]):
+                code = tag.get_text("\n", strip=True)
+                if not code or len(code) < 20:
+                    continue
+                score = self.score_code_block(code)
+                # print(score)
+                if score > 0:
+                    code_blocks.append((score, code))
+
+        if not code_blocks:
+            return "<NOTE>No code examples found in page.</NOTE>"
+
+        code_blocks.sort(reverse=True)
+        # print(code_blocks)
+        # examples = [
+        #     code for score, code in code_blocks if ">>> " in code or "print(" in code
+        # ]
+        # snippets = [
+        #     code for score, code in code_blocks if "def " in code or "class " in code
+        # ]
+        examples, snippets = self._classify_code_blocks(code_blocks)
+
+        out = []
+
+        if examples:
+            out.append("### Code Examples")
+            for code in examples[:2]:
+                out.append(f"```python\n{code}\n```")
+
+        if snippets and not examples:
+            out.append("### Function Signatures / Logic")
+            for code in snippets[:1]:
+                out.append(f"```python\n{code}\n```")
+
+        return (
+            "\n\n".join(out).strip()
+            if out
+            else "<NOTE>No structured doc content found.</NOTE>"
+        )
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("query", type=str, help="Search query string")
+    args = parser.parse_args()
+
+    tool = WebSearchTool(query=args.query)
+    tool.run()
+
+
+if __name__ == "__main__":
+    main()
