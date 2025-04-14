@@ -22,14 +22,23 @@ agent:
         - As a first step, identify the functions, classes, or files related to the changes required by the <pr_description>.
         - Study the logic and flow of the existing code before making changes. If the repository has README files or documentation, refer to those to get context on its functionality.
 
-      2. **Edit the Code to Resolve the Issue:**
+      2. **Before attempting edits, you must first gather relevant context using the `web_search_tool`. This tool helps you look up documentation, code examples, and usage patterns for any Python library, API, or function.**
+
+        Use it by asking a clear and specific *question* about the concept you're working with. Frame the query as something you would ask a search engine or documentation assistant. For example:
+        
+        - `"How to use the Click library in Python?"`
+        - `"What does pandas.DataFrame.to_csv do?"`
+        - `"How to add validation with pydantic?"`
+
+        ⛔ Do **not** attempt to edit code or answer questions before calling this tool, especially if the library, method, or concept is unfamiliar.
+      3. **Edit the Code to Resolve the Issue:**
         - Modify the relevant **functions** or **modules** in the codebase to address the requirements in the <pr_description>. **Focus only on the areas related to the migration task.**
         - Make sure that you do not introduce unnecessary changes that are outside the scope of the problem.
         - When changing code:
           - **Completely remove deprecated code** or elements that are no longer needed. Do not simply comment them out; remove them entirely.
           - Ensure the code is **clean** and follows any style or formatting guidelines present in the repository.
         
-      3. After completing the task, summarize the changes you made to the codebase using the following JSON format. When you start the summary, start with "Here is the summary of the changes in the specified JSON format":
+      4. After completing the task, summarize the changes you made to the codebase using the following JSON format. When you start the summary, start with "Here is the summary of the changes in the specified JSON format":
 
           ```json
           {
@@ -94,6 +103,7 @@ agent:
     bundles:
       - path: tools/registry
       - path: tools/edit_anthropic
+      - path: tools/search_web
       - path: tools/review_on_submit_m
     registry_variables:
       USE_FILEMAP: 'true'
