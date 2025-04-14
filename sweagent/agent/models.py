@@ -70,6 +70,11 @@ class GenericAPIModelConfig(PydanticBaseModel):
 
     name: str = Field(description="Name of the model.")
 
+    base_url: str = Field(
+        # by default, don't use any base url
+        default="",
+        description="Base URL of the model, provided to LiteLLM Completion API."
+    )
     per_instance_cost_limit: float = Field(
         default=3.0,
         description="Cost limit for every instance (task).",
@@ -662,7 +667,7 @@ class LiteLLMModel(AbstractModel):
         try:
             response: litellm.types.utils.ModelResponse = litellm.completion(  # type: ignore
                 model=self.config.name,
-                base_url="https://cmu.litellm.ai",
+                base_url=self.config.base_url,
                 messages=messages,
                 temperature=self.config.temperature if temperature is None else temperature,
                 top_p=self.config.top_p,
