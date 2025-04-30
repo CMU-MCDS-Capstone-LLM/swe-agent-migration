@@ -1,0 +1,10 @@
+tools:
+  search_repo:
+    signature: "search_repo <search_term>"
+    docstring: "Searches in the current repository with a specific function or class, and returns the def and ref relations for the search term. If builtins"
+    arguments:
+      - name: search_term
+        type: string
+        description: function or class to look for in the repository.
+        required: true 
+state_command: "_state"
