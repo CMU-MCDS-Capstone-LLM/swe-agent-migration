@@ -1,0 +1,39 @@
+# Test configuration to force trigger consultant for debugging
+agent:
+  type: default
+  model:
+    name: openai/gpt-4o-mini
+    cost_limit: 2.0
+  config_file: config/default.yaml
+  hooks:
+    - type: interactive_consultant
+      consultant_model:
+        name: openai/gpt-4o
+      intervention_threshold: 1 # Trigger after just 1 step (force mode will override anyway)
+      max_interventions: 1
+      force_trigger: true # FORCE TRIGGER FOR TESTING
+
+env:
+  environment:
+    repo:
+      type: github
+      github_url: https://github.com/adithyabsk/keep2roam
+      base_commit: main
+    post_startup_commands:
+      - cd $ROOT
+      - export USE_FILEMAP="true"
+
+problem_statement: |
+  This repository uses some old Python syntax and dependencies. Please migrate the codebase to use more modern Python practices while ensuring all functionality remains intact.
+
+  Specifically:
+  1. Update any deprecated import statements
+  2. Replace old-style string formatting with f-strings where appropriate
+  3. Update any outdated function signatures or syntax
+  4. Ensure compatibility with Python 3.10+
+
+  Make sure to test that the code still works after your changes.
+
+# Enable detailed logging
+logging:
+  level: DEBUG

@@ -1,0 +1,18 @@
+services:
+  worker-agent:
+    build: ./swe-agent
+    volumes:
+      # TODO: Need to configure swe-agent to take local path to repo mapped to container
+      - /home/eiger/CMU/2025_Spring/11634_Capstone/codebase/tiny_data/trajectories:/app/trajectories
+      - ./config:/config
+      - ./swe-agent/tools:/app/tools
+      # - ./.env:/app/.env
+      - ./repo_config.yaml:/app/repo_config.yaml
+    environment:
+      - LOCAL_REPO_MODE=${LOCAL_REPO_MODE:-1}
+      - REPO_NAME=${REPO_NAME}
+      - SKIP_TESTING_WAIT=${SKIP_TESTING_WAIT:-0}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - LITELLM_BASE_URL=${LITELLM_BASE_URL}
+    command: /app/start_worker.sh

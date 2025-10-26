@@ -1,0 +1,88 @@
+# Configuration for SWE-Agent with Human Input
+# This configuration enables human intervention when the agent gets stuck
+
+# Agent configuration with human input enabled
+agent:
+  name: "human_input_agent"
+
+  # Templates define what the agent should do and how it should respond
+  templates:
+    system_template: |-
+      You are a helpful code migration assistant that can interact with a computer to solve tasks.
+      When you encounter difficult problems or get stuck, a human expert may provide guidance to help you succeed.
+
+      IMPORTANT: You must make exactly ONE tool call per response. Wait for the result before making the next tool call.
+      Do not attempt multiple tool calls in a single response.
+    instance_template: |-
+      <uploaded_files>
+      {{working_dir}}
+      </uploaded_files>
+      I've uploaded a python code repository in the directory {{working_dir}}. Consider the following PR description:
+
+      <pr_description>
+      {{problem_statement}}
+      </pr_description>
+
+      **Your Task:**
+      Your goal is to implement the necessary changes to the repository so that the requirements specified in the <pr_description> are met. Please make minimal, targeted changes only to the non-test files in the {{working_dir}} directory. This means **you should not modify any test files or the logic of existing tests** unless they are directly affected by the migration.
+
+      Follow these steps to resolve the issue:
+
+      1. **Read and Understand Relevant Code:**
+        - As a first step, identify the functions, classes, or files related to the changes required by the <pr_description>.
+        - Study the logic and flow of the existing code before making changes. If the repository has README files or documentation, refer to those to get context on its functionality.
+
+      2. **Edit the Code to Resolve the Issue:**
+        - Modify the relevant **functions** or **modules** in the codebase to address the requirements in the <pr_description>. **Focus only on the areas related to the migration task.**
+        - Make sure that you do not introduce unnecessary changes that are outside the scope of the problem.
+        - When changing code:
+          - **Completely remove deprecated code** or elements that are no longer needed. Do not simply comment them out; remove them entirely.
+          - Ensure the code is **clean** and follows any style or formatting guidelines present in the repository.
+    next_step_template: |-
+      OBSERVATION:
+      {{observation}}
+    next_step_no_output_template: |-
+      Your command ran successfully and did not produce any output.
+
+  model:
+    name: "openai/gpt-4o-mini"
+    api_base: null
+    api_key: null
+    api_version: null
+    temperature: 0.0
+    top_p: 1.0
+    per_instance_cost_limit: 2.0
+    total_cost_limit: 10.0
+
+  # Human input configuration - Less frequent triggers
+  enable_human_input: true # Enable human input feature
+  human_input_on_max_retries: true # Ask for help when max retries exceeded
+  human_input_on_errors: false # Don't ask on every error, only on max retries
+  human_input_retry_threshold: 3 # Higher threshold - trigger after 3 retries
+  human_input_timeout: 300.0 # 5 minute timeout for human responses
+
+  max_requeries: 5 # More retries before giving up - human input only at the end
+
+  # Tools configuration (matching code_migration.yaml)
+  tools:
+    bundles:
+      - path: tools/registry
+      - path: tools/edit_anthropic
+      - path: tools/search_web
+      - path: tools/review_on_submit_m
+    registry_variables:
+      USE_FILEMAP: "true"
+    enable_bash_tool: true
+    parse_function:
+      type: function_calling
+
+  # History processors for better context management
+  history_processors:
+    - type: cache_control
+      last_n_messages: 2
+
+# Environment configuration
+env:
+  deployment:
+    type: "docker"
+    python_standalone_dir: null # Fix for Docker build issues
