@@ -1,0 +1,47 @@
+services:
+  testing-agent:
+    profiles:
+      - testing
+    build: ./testing-agent/testing-agent
+    volumes:
+      - ./uploads:/uploads
+      - ./shared-workspace:/workspace
+      - ./config:/config
+      - ./.env:/app/.env
+    environment:
+      - LOCAL_REPO_MODE=${LOCAL_REPO_MODE:-1}
+      - REPO_NAME=${REPO_NAME}
+      - REPO_PATH=/workspace
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    command: sh -c "rm -rf /workspace/* 2>/dev/null || true; /app/setup_repo.sh"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "sh",
+          "-c",
+          'ALL_READY=1; for repo in /workspace/*; do if [ -d "$$repo" ]; then FLAG="$$repo/testing_complete.flag"; if [ ! -f "$$FLAG" ]; then echo "Waiting for $$FLAG"; ALL_READY=0; fi; fi; done; if [ $$ALL_READY -eq 1 ]; then echo "All repos tested!"; exit 0; else exit 1; fi',
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+      start_period: 30s
+
+  worker-agent:
+    build: ./swe-agent
+    volumes:
+      - ./shared-workspace:/workspace
+      - ./config:/config
+      - ./swe-agent/tools:/app/tools
+      - ./.env:/app/.env
+      - ./repo_config.yaml:/app/repo_config.yaml
+    environment:
+      - LOCAL_REPO_MODE=${LOCAL_REPO_MODE:-1}
+      - REPO_NAME=${REPO_NAME}
+      - SKIP_TESTING_WAIT=${SKIP_TESTING_WAIT:-0}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      testing-agent:
+        condition: service_healthy
+    command: /app/start_worker.sh

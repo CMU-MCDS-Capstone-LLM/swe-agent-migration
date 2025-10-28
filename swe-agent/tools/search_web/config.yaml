@@ -1,0 +1,14 @@
+tools:
+  web_search_tool:
+    signature: |
+      web_search_tool <query>
+    docstring: >
+      Performs a SearXNG search using an LLM-enhanced query generator and result filter.
+      Returns summarized documentation content that is likely to help the agent understand or solve the given query.
+      Does not call an LLM directly — only provides summarized content to improve SWE-Agent context.
+    arguments:
+      - name: query
+        type: string
+        description: "Search query string, e.g., 'pandas DataFrame to CSV'"
+        required: true
+state_command: "_state_web_search"
