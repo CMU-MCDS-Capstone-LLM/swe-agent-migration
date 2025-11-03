@@ -6,7 +6,8 @@
 set -euo pipefail
 
 CONTAINER_NAME="${1:-}"
-COMMAND="${2:-}"
+shift  # Remove first argument (container name)
+COMMAND="$@"  # All remaining arguments form the command
 
 if [ -z "$CONTAINER_NAME" ] || [ -z "$COMMAND" ]; then
     echo "Usage: exec_command <container_name> <command>"
