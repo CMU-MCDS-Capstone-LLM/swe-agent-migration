@@ -1,0 +1,19 @@
+tools:
+  exec_command:
+    signature: "exec_command <container_name> <command>"
+    docstring: >
+      Execute a command in the repo Docker container.
+      Use this for running tests, installing packages, or any repository-specific operations.
+
+      The container_name should be in format: repo-<identifier>
+      The command will be executed in the repository directory inside the container.
+    arguments:
+      - name: container_name
+        type: string
+        description: "Name of the Docker container (e.g., repo-alice-biometrics_petisco__9abf7b1f6ef8c55bdddcb9a5c2eff513f6a93130)"
+        required: true
+      - name: command
+        type: string
+        description: "Command to execute in the container (e.g., python -m pytest tests/)"
+        required: true
+    end_name: "exec_command"

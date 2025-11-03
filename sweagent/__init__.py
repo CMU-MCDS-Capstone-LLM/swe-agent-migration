@@ -52,6 +52,8 @@ def get_agent_commit_hash() -> str:
 
     If we cannot get the hash, we return an empty string.
     """
+    if os.path.exists("/.dockerenv"):
+        return "unavailable"
     try:
         repo = Repo(REPO_ROOT, search_parent_directories=False)
     except Exception:
@@ -102,7 +104,7 @@ def impose_rex_lower_bound() -> None:
 
 
 impose_rex_lower_bound()
-get_logger("swe-agent", emoji="👋").info(get_agent_version_info())
+# get_logger("swe-agent", emoji="👋").info(get_agent_version_info())  # Disabled to avoid git dependency
 
 
 __all__ = [

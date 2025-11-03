@@ -2,3 +2,4 @@ __pycache__/
 trajectories/
 .envrc
 .vscode/
+.env

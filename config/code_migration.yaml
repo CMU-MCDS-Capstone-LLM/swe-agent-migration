@@ -1,10 +1,9 @@
-# Interactive Consultant Configuration for SWE-Agent
 # Provides real-time consultant guidance + enforces search-before-edit + JSON summary at the end.
 
 agent:
   type: default
   model: &worker_model
-    name: openai/gpt-4o-mini
+    name: openai/gpt-4o
     api_key: $OPENAI_API_KEY
     per_instance_cost_limit: 2.0
     per_instance_call_limit: 100
@@ -17,12 +16,15 @@ agent:
       You are a code migration assistant working on solving tasks. You have access to various tools and can interact with a computer environment.
 
       ⚠️ Rules:
-      - Use `web_search_tool` ONCE at the start to research the migration requirements and unfamiliar libraries.
-      - After initial research, proceed with implementation without additional web searches.
       - Always explore the repository and note where test files are located.
       - You may run tests to verify your migration, but DO NOT modify tests or try to fix test failures.
       - After you are confident the task is complete, output a JSON summary of all changes (schema below).
-      - Consultant guidance (🧠) is authoritative. You must consider and integrate it.
+
+      🐳 Docker Container Rules:
+      - ALWAYS use `exec_command` tool to run ANY commands related to the repository (tests, Python scripts, package installation, etc.)
+      - NEVER run repository commands directly in your local environment
+      - Use `exec_command <container_name> <command>` format for all repo operations
+      - The container name will be provided in the problem statement
 
       Final Step:
       - At the end, and only at the end, output the JSON summary. Do not output JSON mid-task.
@@ -55,11 +57,10 @@ agent:
       - Do NOT modify ANY files to try to make tests pass - tests verify your work, they don't dictate it
 
       **Approach:**
-      1. **Research FIRST - MANDATORY**: Use `web_search_tool` to search for "how to migrate from [old library] to [new library]" and "common mistakes when using [new library]". Study the API documentation carefully before making ANY changes.
-      2. **Verify Baseline**: Run tests ONCE at the start (`pytest -q --tb=short --disable-warnings`) to verify they pass on the original code. If they fail, proceed anyway - tests are pre-generated and may have minor issues.
-      3. **Understand the Repository**: Explore the repo structure to understand how it is organized and identify all files that need migration.
-      4. **Implement Changes CAREFULLY**: Modify only the source files relevant to the migration. Double-check the new library's API to ensure correct usage. Remove deprecated code instead of commenting it.
-      5. **Verify Migration**: After migration, run tests again to see if your changes work. If they fail, that's OK - move to final summary.
+      1. **Verify Baseline**: Run tests ONCE at the start (`pytest -q --tb=short --disable-warnings`) to verify they pass on the original code. If they fail, proceed anyway - tests are pre-generated and may have minor issues.
+      2. **Understand the Repository**: Explore the repo structure to understand how it is organized and identify all files that need migration.
+      3. **Implement Changes CAREFULLY**: Modify only the source files relevant to the migration. Double-check the new library's API to ensure correct usage. Remove deprecated code instead of commenting it.
+      4. **Verify Migration**: After migration, run tests again to see if your changes work. If they fail, that's OK - move to final summary.
 
       **CRITICAL - Test Failures:**
       - Tests are ONLY for verification, NOT for fixing
@@ -76,29 +77,13 @@ agent:
 
     next_step_no_output_template: |-
       Your command ran successfully and did not produce any output.
-
-  hooks:
-    - type: interactive_consultant
-      consultant_model:
-        name: openai/gpt-4o
-        api_key: $OPENAI_API_KEY
-        temperature: 0.2
-        per_instance_cost_limit: 0.4
-        per_instance_call_limit: 8
-      force_intervention: false
-      force_warmup_steps: 2
-      force_include_repo_samples: 5
-      intervention_threshold: 1
-      max_interventions: 20
-      working_dir: "{{working_dir}}"
-
   tools:
     execution_timeout: 300
     bundles:
       - path: tools/registry
       - path: tools/edit_anthropic
-      - path: tools/search_web
       - path: tools/review_on_submit_m
+      - path: tools/docker_exec
     enable_bash_tool: true
     parse_function:
       type: function_calling
@@ -106,7 +91,7 @@ agent:
       USE_FILEMAP: "true"
       SUBMIT_REVIEW_MESSAGES:
         - |
-          Thank you for your work on this task. The consultant system has been monitoring your progress and providing guidance as needed.
+          Thank you for your work on this task.
 
           Please submit your final solution.
 

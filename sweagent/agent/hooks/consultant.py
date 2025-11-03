@@ -56,7 +56,6 @@ class StuckDetector:
             if any(t in a for t in ("edit_file", "str_replace", "write_file"))
         )
         read_cnt = sum(1 for a in actions if "read_file" in a)
-        web_search_cnt = sum(1 for a in actions if "web_search_tool" in a)
         file_ops = [
             a
             for a in actions
@@ -68,9 +67,6 @@ class StuckDetector:
         # Thrash: many reads, no edits for a while
         if read_cnt >= 4 and edit_cnt == 0:
             return (True, "Reading many files without making progress")
-        # Excessive web searching without progress
-        if web_search_cnt >= 3 and edit_cnt == 0:
-            return (True, "Excessive web searching without making progress")
         # Implementation phase: multiple errors after edits
         if edit_cnt > 0 and err_cnt >= 2:
             return (True, "Multiple errors after edit attempts")

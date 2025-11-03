@@ -1,5 +1,0 @@
-repositories:
-  adithyabsk__keep2roam:
-    problem_statement:
-      type: "text"
-      text: "Analyze this codebase and migrate any argparse usage to click library. Focus on converting command-line argument parsing from argparse to click while maintaining the same functionality."

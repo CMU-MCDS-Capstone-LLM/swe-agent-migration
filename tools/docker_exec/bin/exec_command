@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Usage: exec_command <container_name> <command>
+# Execute commands in the repository Docker container
+
+CONTAINER_NAME="${1:-}"
+shift  # Remove first argument
+
+if [ -z "$CONTAINER_NAME" ]; then
+    echo "Error: Missing container name" >&2
+    echo "Usage: exec_command <container_name> <command>" >&2
+    exit 1
+fi
+
+# Get all remaining arguments as the command
+COMMAND="$@"
+
+if [ -z "$COMMAND" ]; then
+    echo "Error: Missing command" >&2
+    echo "Usage: exec_command <container_name> <command>" >&2
+    exit 1
+fi
+
+# Derive repo folder from container name: repo-<folder_name>
+REPO_FOLDER="$CONTAINER_NAME"
+if [[ "$REPO_FOLDER" == repo-* ]]; then
+    REPO_FOLDER="${REPO_FOLDER#repo-}"
+fi
+
+# The repo is mounted at /ws in the container (from docker_container.py)
+TARGET_DIR="/ws/$REPO_FOLDER"
+FALLBACK_DIR="/$REPO_FOLDER"
+
+# Execute the command in the container
+docker exec "$CONTAINER_NAME" sh -lc "if [ -d '$TARGET_DIR' ]; then cd '$TARGET_DIR'; elif [ -d '$FALLBACK_DIR' ]; then cd '$FALLBACK_DIR'; else echo 'ERROR: Directory not found. Tried: $TARGET_DIR and $FALLBACK_DIR'; ls -la /; exit 1; fi; $COMMAND"
+
