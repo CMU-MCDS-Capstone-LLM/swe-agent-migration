@@ -1,0 +1,33 @@
+tools:
+  repograph_query:
+    signature: "repograph_query <repo_path> [<migration_config>] [<source_module>] [<source_qualpath>] [<workspace_symbol>] [<env_python>] [<extra_path>]"
+    docstring: "Execute a RepoGraph query to find references to external symbols and workspace symbols. Returns JSON with library_consumers and workspace_callers."
+    arguments:
+      - name: repo_path
+        type: string
+        description: "Path to the repository (relative to workspace root or absolute)"
+        required: true
+      - name: migration_config
+        type: string
+        description: "Path to migration config YAML file (optional if source_module is provided)"
+        required: false
+      - name: source_module
+        type: string
+        description: "Source module name (e.g., 'collections')"
+        required: false
+      - name: source_qualpath
+        type: string
+        description: "Source qualpath within module (e.g., 'deque.popleft')"
+        required: false
+      - name: workspace_symbol
+        type: string
+        description: "Workspace symbol to search for (format: 'module:qualpath' or 'module')"
+        required: false
+      - name: env_python
+        type: string
+        description: "Path to Python interpreter for the repo environment"
+        required: false
+      - name: extra_path
+        type: string
+        description: "Additional site-packages directory (can be specified multiple times)"
+        required: false
