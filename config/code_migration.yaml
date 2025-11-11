@@ -1,5 +1,3 @@
-# Provides real-time consultant guidance + enforces search-before-edit + JSON summary at the end.
-
 agent:
   type: default
   model: &worker_model
@@ -13,63 +11,49 @@ agent:
 
   templates:
     system_template: |-
-      You are a code migration assistant working on solving tasks. You have access to various tools and can interact with a computer environment.
+      You are a code migration assistant. You have access to tools to analyze code, edit files, and run tests.
 
-      ⚠️ Rules:
-      - Always explore the repository and note where test files are located.
-      - You may run tests to verify your migration, but DO NOT modify tests or try to fix test failures.
-      - After you are confident the task is complete, output a JSON summary of all changes (schema below).
-
-      🐳 Docker Container Rules:
-      - ALWAYS use `exec_command` tool to run ANY commands related to the repository (tests, Python scripts, package installation, etc.)
-      - NEVER run repository commands directly in your local environment
-      - Use `exec_command <container_name> <command>` format for all repo operations
-      - The container name will be provided in the problem statement
-
-      Final Step:
-      - At the end, and only at the end, output the JSON summary. Do not output JSON mid-task.
+      Rules:
+      - Use `exec_command <container_name> <command>` for all repository commands (tests, installs, etc.)
+      - Do NOT modify test files or try to fix test failures
+      - Output JSON summary at the end only
 
     instance_template: |-
       <uploaded_files>
       {{working_dir}}
       </uploaded_files>
-      I've uploaded a python code repository in the directory {{working_dir}}.
 
-      Consider the following PR description:
+      Repository: {{working_dir}}
+      Task: {{problem_statement}}
 
-      <pr_description>
-      {{problem_statement}}
-      </pr_description>
+      **Steps (execute in order):**
 
-      **🚨 CRITICAL - Understanding What's Already Here:**
-      - This repository has a `tests/` directory with pre-generated tests - THESE ARE NOT YOUR WORK!
-      - The tests were created by another agent to verify your migration - DO NOT submit them as your work!
-      - You MUST modify the SOURCE CODE files (e.g., `convert.py`, `models.py`, etc.) according to the PR description
-      - Do NOT submit until you have ACTUALLY migrated the source code!
+      1. **Use RepoGraph Tool First** (REQUIRED):
+         - Run: `repograph_query {{working_dir}} <source_module>`
+         - Example: `repograph_query {{working_dir}} slackclient`
+         - This finds ALL files using the deprecated library
 
-      **Your Task:**
-      Implement the necessary changes to meet the requirements in the PR description. Make minimal, targeted changes only to non-test files.
+      2. **Run Tests Before Migration**:
+         - Run: `exec_command <container_name> pytest -q --tb=short --disable-warnings`
+         - Record baseline test results
 
-      **⚠️ IMPORTANT - What to IGNORE:**
-      - Do NOT modify ANY files in the `tests/` directory or files starting with `test_`
-      - IGNORE all `testing_agent_output.txt`, `.coverage`, `coverage.xml` files
-      - These are testing artifacts and should NOT influence your migration decisions
-      - Do NOT modify ANY files to try to make tests pass - tests verify your work, they don't dictate it
+      3. **Perform Migration**:
+         - Modify source files based on repograph results
+         - Update requirements.txt if needed (e.g., replace slackclient with slack-sdk)
+         - Do NOT modify test files
 
-      **Approach:**
-      1. **Verify Baseline**: Run tests ONCE at the start (`pytest -q --tb=short --disable-warnings`) to verify they pass on the original code. If they fail, proceed anyway - tests are pre-generated and may have minor issues.
-      2. **Understand the Repository**: Explore the repo structure to understand how it is organized and identify all files that need migration.
-      3. **Implement Changes CAREFULLY**: Modify only the source files relevant to the migration. Double-check the new library's API to ensure correct usage. Remove deprecated code instead of commenting it.
-      4. **Verify Migration**: After migration, run tests again to see if your changes work. If they fail, that's OK - move to final summary.
+      4. **Run Tests After Migration**:
+         - Run: `exec_command <container_name> pytest -q --tb=short --disable-warnings`
+         - Record post-migration test results
 
-      **CRITICAL - Test Failures:**
-      - Tests are ONLY for verification, NOT for fixing
-      - If tests fail after your migration, that's EXPECTED and ACCEPTABLE - move on to the final summary
-      - NEVER try to make tests pass by modifying ANY files (source code, dependencies, setup.py, requirements.txt, etc.)
-      - Test failures do NOT mean you did something wrong - they are pre-generated and may be outdated
-      - The PR description is your source of truth, NOT the tests
-      - After running tests post-migration, proceed IMMEDIATELY to outputting your JSON summary
-      - DO NOT iterate or try different approaches to fix test failures
+      5. **Output JSON Summary**:
+         - Include all changes made
+         - Include test results (before and after)
+
+      **Important:**
+      - Tests verify your work but failures are acceptable - do NOT fix tests
+      - Focus on migrating source code only
+      - Container name is in the problem statement
 
     next_step_template: |-
       OBSERVATION:
@@ -78,12 +62,13 @@ agent:
     next_step_no_output_template: |-
       Your command ran successfully and did not produce any output.
   tools:
-    execution_timeout: 300
+    execution_timeout: 600 # Increased timeout for repograph queries (multilspy can take time)
     bundles:
       - path: tools/registry
       - path: tools/edit_anthropic
       - path: tools/review_on_submit_m
       - path: tools/docker_exec
+      - path: tools/repograph
     enable_bash_tool: true
     parse_function:
       type: function_calling
