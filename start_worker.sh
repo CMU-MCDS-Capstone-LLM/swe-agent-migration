@@ -33,12 +33,19 @@ echo "Processing repository: $REPO_NAME"
 echo "Repository path: $WORKSPACE_DIR/$REPO_NAME"
 
 echo "Running SWE-agent..."
-        python sweagent/run/run.py run \
-          --config=./config/code_migration.yaml \
-          --env.deployment.type=local \
-          --env.repo.type=preexisting \
-          --env.repo.repo_name="$REPO_NAME" \
-          --problem_statement.type=text \
-        --problem_statement.text="${PROBLEM_STATEMENT:-Code migration task for $REPO_NAME. Container name: repo-$REPO_NAME}"
+
+# Use OUTPUT_DIR if provided, otherwise use default
+OUTPUT_DIR="${OUTPUT_DIR:-/app/trajectories}"
+
+echo "Output directory: $OUTPUT_DIR"
+
+python sweagent/run/run.py run \
+  --config=./config/code_migration.yaml \
+  --env.deployment.type=local \
+  --env.repo.type=preexisting \
+  --env.repo.repo_name="$REPO_NAME" \
+  --problem_statement.type=text \
+  --problem_statement.text="${PROBLEM_STATEMENT:-Code migration task for $REPO_NAME. Container name: repo-$REPO_NAME}" \
+  --output_dir "$OUTPUT_DIR"
 
 echo "SWE-agent completed"
