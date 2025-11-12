@@ -3,65 +3,26 @@
 
 main() {
     local repo_path="${1:-}"
-    local arg2="${2:-}"
-    local arg3="${3:-}"
-    local arg4="${4:-}"
-    local arg5="${5:-}"
-    local arg6="${6:-}"
-    local arg7="${7:-}"
+    local source_module="${2:-}"
+    local source_qualpath="${3:-}"
     
-    if [ -z "$repo_path" ]; then
-        echo "Usage: repograph_query <repo_path> [<migration_config>] [<source_module>] [<source_qualpath>] [<workspace_symbol>] [<env_python>] [<extra_path>]"
+    if [ -z "$repo_path" ] || [ -z "$source_module" ]; then
+        echo "Usage: repograph_query <repo_path> <source_module> [<source_qualpath>]"
         return 1
     fi
-    
-    local migration_config=""
-    local source_module=""
-    local source_qualpath=""
-    local workspace_symbol=""
-    local env_python=""
-    local extra_path=""
-    
-    if [ -n "$arg2" ]; then
-        if [[ "$arg2" == *"/"* ]] || [[ "$arg2" == *.yaml ]] || [[ "$arg2" == *.yml ]]; then
-            migration_config="$arg2"
-            source_module="$arg3"
-            source_qualpath="$arg4"
-            workspace_symbol="$arg5"
-            env_python="$arg6"
-            extra_path="$arg7"
-        else
-            source_module="$arg2"
-            source_qualpath="$arg3"
-            workspace_symbol="$arg4"
-            env_python="$arg5"
-            extra_path="$arg6"
-        fi
-    fi
-    
-    local workspace_symbols=()
-    [ -n "$workspace_symbol" ] && workspace_symbols=("$workspace_symbol")
-    
-    local extra_paths=()
-    [ -n "$extra_path" ] && extra_paths=("$extra_path")
     
     local server_host="${REPOGRAPH_SERVER_HOST:-${REPO_CONTAINER_NAME:-}}"
     [ -z "$server_host" ] && echo "Error: REPOGRAPH_SERVER_HOST not set" && return 1
     
     local workspace_dir="${WORKSPACE_DIR:-/ws}"
     [[ "$repo_path" != /* ]] && repo_path="${workspace_dir}/${repo_path}"
-    [[ -n "$migration_config" && "$migration_config" != /* ]] && migration_config="${workspace_dir}/${migration_config}"
     
     # Call Python script to execute the query
     python3 /app/tools/repograph/lib/repograph_tool.py \
         --server-host "$server_host" \
         --repo-path "$repo_path" \
-        --migration-config "$migration_config" \
         --source-module "$source_module" \
-        --source-qualpath "$source_qualpath" \
-        --workspace-symbols "${workspace_symbols[@]}" \
-        --env-python "$env_python" \
-        --extra-paths "${extra_paths[@]}"
+        ${source_qualpath:+--source-qualpath "$source_qualpath"}
 }
 
 main "$@"
