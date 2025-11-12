@@ -16,14 +16,8 @@ def main():
         "--server-host", required=True, help="RepoGraph server hostname (network alias)"
     )
     parser.add_argument("--repo-path", required=True, help="Repository path")
-    parser.add_argument("--migration-config", help="Migration config YAML path")
-    parser.add_argument("--source-module", help="Source module name")
-    parser.add_argument("--source-qualpath", help="Source qualpath")
-    parser.add_argument(
-        "--workspace-symbols", nargs="*", default=[], help="Workspace symbols"
-    )
-    parser.add_argument("--env-python", help="Python interpreter path")
-    parser.add_argument("--extra-paths", nargs="*", default=[], help="Extra paths")
+    parser.add_argument("--source-module", required=True, help="Source module name")
+    parser.add_argument("--source-qualpath", help="Source qualpath (optional)")
 
     args = parser.parse_args()
 
@@ -41,20 +35,11 @@ def main():
     # Build request payload
     request_data = {
         "repo_path": args.repo_path,
+        "source_module": args.source_module,
     }
 
-    if args.migration_config:
-        request_data["migration_config"] = args.migration_config
-    if args.source_module:
-        request_data["source_module"] = args.source_module
     if args.source_qualpath:
         request_data["source_qualpath"] = args.source_qualpath
-    if args.env_python:
-        request_data["env_python"] = args.env_python
-    if args.extra_paths:
-        request_data["extra_paths"] = list(args.extra_paths)
-    if args.workspace_symbols:
-        request_data["workspace_symbols"] = list(args.workspace_symbols)
 
     try:
         response = requests.post(f"{server_url}/run", json=request_data, timeout=600)
